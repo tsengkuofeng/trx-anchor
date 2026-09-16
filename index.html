@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TRX 棒式捲腹：低錨點 vs 高錨點</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EEF1F4;--panel:#FFFFFF;--ink:#1D2630;--sub:#5A6673;--line:#C9D1D9;--strap:#E0A800;--path:#2F7BD8;--pull:#D2452F;}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#141A20;--panel:#1C242C;--ink:#E6EBF0;--sub:#9AA6B2;--line:#34404B;--strap:#F2C230;--path:#6AA8F0;--pull:#F0735E;}}
+:root[data-theme="dark"]{--bg:#141A20;--panel:#1C242C;--ink:#E6EBF0;--sub:#9AA6B2;--line:#34404B;--strap:#F2C230;--path:#6AA8F0;--pull:#F0735E;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;line-height:1.6}
+main{max-width:980px;margin:0 auto;padding:28px 18px 40px}
+h1{font-size:clamp(22px,4vw,30px);margin:0 0 6px;font-weight:700}
+.lead{color:var(--sub);margin:0 0 20px;max-width:70ch}
+.ctrl{display:flex;flex-wrap:wrap;gap:14px 28px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:16px}
+.ctrl label{display:flex;align-items:center;gap:10px;font-size:14px}
+.ctrl input{width:180px;accent-color:var(--strap)}
+.ctrl output{min-width:56px;font-weight:500}
+.panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.panel h2{font-size:17px;margin:0 0 4px}
+svg{width:100%;height:auto;display:block}
+svg text{font-size:11px;fill:var(--sub);font-family:inherit}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
+.stat{font-size:12px;color:var(--sub)}
+.stat b{display:block;font-size:20px;color:var(--ink);font-weight:700}
+.note{margin-top:18px;color:var(--sub);font-size:14px;max-width:75ch}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:var(--sub);margin-top:12px}
+.legend span::before{content:"";display:inline-block;width:18px;height:3px;margin-right:6px;vertical-align:middle;background:var(--c)}
+</style>
+</head>
+<body>
+<main>
+<h1>TRX 棒式捲腹：錨點高低差在哪？</h1>
+<p class="lead">兩邊足圈起始高度一樣（離地 30 cm），唯一差別是「錨點到腳」的繩長，也就是鐘擺半徑。拖動滑桿看腳收向胸口時會發生什麼。</p>
+
+<div class="ctrl">
+ <label>捲腹進度 <input id="p" type="range" min="0" max="1" step="0.01" value="1"><output id="pv"></output></label>
+ <label>腿長（髖到腳） <input id="leg" type="range" min="0.75" max="1.10" step="0.01" value="1.05"><output id="lv"></output></label>
+</div>
+
+<div class="panels">
+ <section class="panel"><h2>低錨點 1.5 m</h2><svg id="s0" viewBox="0 0 340 300" role="img" aria-label="低錨點示意圖"></svg>
+  <div class="stats" id="t0"></div></section>
+ <section class="panel"><h2>高錨點 2.5 m</h2><svg id="s1" viewBox="0 0 340 300" role="img" aria-label="高錨點示意圖"></svg>
+  <div class="stats" id="t1"></div></section>
+</div>
+
+<div class="legend">
+ <span style="--c:var(--strap)">TRX 織帶</span>
+ <span style="--c:var(--path)">腳的移動軌跡（圓弧）</span>
+ <span style="--c:var(--pull)">織帶把腳往後拉的分力</span>
+</div>
+
+<p class="note">腳往前收的水平距離一樣，但半徑短的時候，圓弧彎得更急：繩子偏角更大、腳被硬抬得更高、往回拉的力也更強。腿越長，收腿距離越長，這個差距放大得越明顯。</p>
+</main>
+
+<script>
+const S=100,FL=280,AX=60,CR=0.3,TORSO=0.6,SH=0.55,Hs=[1.5,2.5];
+const Y=h=>FL-h*S, X=x=>AX+x*S;
+function draw(i,p,leg){
+ const H=Hs[i],L=H-CR,tuck=0.55*leg,dx=p*tuck;
+ const footH=H-Math.sqrt(L*L-dx*dx);
+ const th=Math.asin(dx/L),rise=(footH-CR)*100,pull=Math.tan(th)*100;
+ const xS=Math.sqrt((leg+TORSO)**2-(SH-CR)**2);
+ const hipH=SH+p*0.22,hipX=xS-Math.sqrt(TORSO*TORSO-(hipH-SH)**2);
+ const fx=dx,fy=footH,vx=fx-hipX,vy=fy-hipH,d=Math.hypot(vx,vy);
+ const half=leg/2,dd=Math.min(d,leg-0.001);
+ const mx=hipX+vx/d*dd/2,my=hipH+vy/d*dd/2;
+ const h=Math.sqrt(Math.max(0,half*half-(dd/2)**2));
+ let nx=-vy/d,ny=vx/d; if(ny>0){nx=-nx;ny=-ny;} // 膝蓋朝下收到胸口下方
+ const kx=mx+nx*h,ky=my+ny*h;
+ let arc="";for(let k=0;k<=30;k++){const u=k/30*tuck;arc+=(k?"L":"M")+X(u).toFixed(1)+" "+Y(H-Math.sqrt(L*L-u*u)).toFixed(1);}
+ const aL=Math.tan(th)*80;
+ document.getElementById("s"+i).innerHTML=`
+ <line x1="0" y1="${FL}" x2="340" y2="${FL}" stroke="var(--ink)" stroke-width="1.5"/>
+ <rect x="${AX-16}" y="${Y(H)-9}" width="32" height="9" rx="2" fill="var(--ink)" opacity=".75"/>
+ <text x="${AX+22}" y="${Y(H)+1}">錨點</text>
+ <line x1="${AX}" y1="${Y(H)}" x2="${AX}" y2="${Y(0)}" stroke="var(--ink)" stroke-dasharray="3 4" opacity=".3"/>
+ <line x1="${X(0)}" y1="${Y(CR)}" x2="${X(tuck)+14}" y2="${Y(CR)}" stroke="var(--ink)" stroke-dasharray="2 3" opacity=".3"/>
+ <text x="${X(tuck)+16}" y="${Y(CR)+4}">起始高度</text>
+ <path d="${arc}" fill="none" stroke="var(--path)" stroke-width="2" stroke-dasharray="5 3"/>
+ <line x1="${AX}" y1="${Y(H)}" x2="${X(fx)}" y2="${Y(fy)}" stroke="var(--strap)" stroke-width="3.5"/>
+ <polyline points="${X(xS)},${Y(0)} ${X(xS)},${Y(SH)} ${X(hipX)},${Y(hipH)} ${X(kx)},${Y(ky)} ${X(fx)},${Y(fy)}" fill="none" stroke="var(--ink)" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/>
+ <circle cx="${X(xS)+13}" cy="${Y(SH)}" r="9" fill="var(--panel)" stroke="var(--ink)" stroke-width="3"/>
+ ${aL>3?`<line x1="${X(fx)}" y1="${Y(fy)+16}" x2="${X(fx)-aL}" y2="${Y(fy)+16}" stroke="var(--pull)" stroke-width="2.5"/>
+ <polygon points="${X(fx)-aL-7},${Y(fy)+16} ${X(fx)-aL},${Y(fy)+11} ${X(fx)-aL},${Y(fy)+21}" fill="var(--pull)"/>`:""}
+ <text x="8" y="${FL-8}">繩長（半徑）${L.toFixed(1)} m</text>`;
+ document.getElementById("t"+i).innerHTML=
+ `<div class="stat"><b>${(th*180/Math.PI).toFixed(1)}°</b>繩子偏角</div>
+  <div class="stat"><b>${rise.toFixed(1)} cm</b>腳被抬高</div>
+  <div class="stat"><b>${pull.toFixed(0)}%</b>往後拉力／腳部負重</div>`;
+}
+const pEl=document.getElementById("p"),lEl=document.getElementById("leg");
+function upd(){const p=+pEl.value,leg=+lEl.value;
+ document.getElementById("pv").textContent=Math.round(p*100)+"%";
+ document.getElementById("lv").textContent=leg.toFixed(2)+" m";
+ draw(0,p,leg);draw(1,p,leg);}
+pEl.addEventListener("input",upd);lEl.addEventListener("input",upd);upd();
+</script>
+</body>
+</html>
